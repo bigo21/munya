@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "Données d'identité chiffrées de l'utilisatrice.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "phoneNumberHash": { "type": "string" },
+        "emergencyContacts": { "type": "string", "description": "JSON chiffré des contacts" },
+        "role": { "type": "string", "enum": ["user", "admin"] }
+      },
+      "required": ["userId", "role"]
+    },
+    "supportData": {
+      "title": "Support Data",
+      "description": "Données de santé et de support anonymisées.",
+      "type": "object",
+      "properties": {
+        "anonymId": { "type": "string" },
+        "moodHistory": { "type": "array", "items": { "type": "object" } },
+        "appointments": { "type": "array", "items": { "type": "object" } },
+        "legalNotes": { "type": "string", "description": "Texte chiffré" }
+      },
+      "required": ["anonymId"]
+    },
+    "mediaVault": {
+      "title": "Media Vault",
+      "description": "Preuves audio/photo chiffrées.",
+      "type": "object",
+      "properties": {
+        "mediaId": { "type": "string" },
+        "anonymId": { "type": "string" },
+        "encryptedBlobUrl": { "type": "string" },
+        "metadata": { "type": "object" }
+      },
+      "required": ["mediaId", "anonymId", "encryptedBlobUrl"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "Profils utilisateurs sécurisés."
+    },
+    "/support/{anonymId}": {
+      "schema": "supportData",
+      "description": "Données de support anonymes."
+    },
+    "/vault/{mediaId}": {
+      "schema": "mediaVault",
+      "description": "Coffre-fort de preuves."
+    }
+  }
+}

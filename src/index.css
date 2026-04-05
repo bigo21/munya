@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-munya-green: #2D6A4F;
+  --color-horizon-blue: #457B9D;
+  --color-soft-sand: #F1F4F2;
+  --color-wisdom-amber: #E9C46A;
+  --color-mist-gray: #4A4A4A;
+}
+
+@layer base {
+  body {
+    @apply bg-soft-sand text-mist-gray font-sans;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-munya-green;
+  }
+}
+
+.calculator-btn {
+  @apply bg-white hover:bg-gray-100 active:bg-gray-200 transition-colors duration-100 rounded-lg shadow-sm border border-gray-200 text-xl font-mono;
+}
+
+.calculator-op {
+  @apply bg-horizon-blue text-white hover:bg-horizon-blue/90 active:bg-horizon-blue/80;
+}
+
+.calculator-eq {
+  @apply bg-munya-green text-white hover:bg-munya-green/90 active:bg-munya-green/80;
+}
+
+.glass-card {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 rounded-3xl shadow-xl;
+}
+
+.btn-primary {
+  @apply bg-munya-green text-white px-6 py-3 rounded-2xl font-semibold hover:bg-munya-green/90 transition-all active:scale-95 disabled:opacity-50;
+}
+
+.btn-secondary {
+  @apply bg-horizon-blue text-white px-6 py-3 rounded-2xl font-semibold hover:bg-horizon-blue/90 transition-all active:scale-95;
+}
+
+.btn-ghost {
+  @apply text-mist-gray px-6 py-3 rounded-2xl font-semibold hover:bg-gray-100 transition-all;
+}

@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (matches auth.uid)
+    // Fields:
+    //   - userId: string (required) - UID de l'utilisatrice
+    //   - phoneNumberHash: string (optional) - HMAC du numéro
+    //   - emergencyContacts: string (optional) - JSON chiffré
+    //   - role: string (required) - 'user' ou 'admin'
+    //
+    // Collection: support
+    // Document ID: anonymId (UUID anonyme)
+    // Fields:
+    //   - anonymId: string (required) - Identifiant anonyme
+    //   - moodHistory: list (optional) - Historique d'humeur
+    //   - appointments: list (optional) - Liste de RDV
+    //   - legalNotes: string (optional) - Notes chiffrées
+    //
+    // Collection: vault
+    // Document ID: mediaId
+    // Fields:
+    //   - mediaId: string (required)
+    //   - anonymId: string (required) - Lien vers support
+    //   - encryptedBlobUrl: string (required)
+    //   - metadata: map (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "loicango11@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['userId', 'role']) &&
+             data.userId == request.auth.uid &&
+             data.role in ['user', 'admin'] &&
+             (data.role == 'user' || isAdmin());
+    }
+
+    function isValidSupport(data) {
+      return hasRequiredFields(['anonymId']) &&
+             data.anonymId is string && data.anonymId.size() > 0;
+    }
+
+    function isValidVault(data) {
+      return hasRequiredFields(['mediaId', 'anonymId', 'encryptedBlobUrl']) &&
+             data.mediaId is string && data.encryptedBlobUrl is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      // Seul l'utilisateur peut lire son propre profil (PII protection)
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Création : L'utilisateur peut créer son profil s'il est valide
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      
+      // Mise à jour : L'utilisateur ne peut pas changer son rôle lui-même
+      allow update: if isOwner(userId) && 
+                      isValidUser(request.resource.data) && 
+                      request.resource.data.role == resource.data.role;
+    }
+
+    match /support/{anonymId} {
+      // Accès anonyme mais authentifié requis
+      // Dans un système Zero-Knowledge, le lien est fait côté client
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSupport(request.resource.data);
+      allow update: if isAuthenticated() && isValidSupport(request.resource.data);
+    }
+
+    match /vault/{mediaId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidVault(request.resource.data);
+      allow delete: if isAdmin(); // Seul l'admin peut purger si besoin, ou via Panic Mode client
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
