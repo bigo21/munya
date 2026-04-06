@@ -1,0 +1,9 @@
+{
+  "name": "MUNYA",
+  "description": "Une application de sécurité et de soutien pour les femmes, camouflée et sécurisée.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
